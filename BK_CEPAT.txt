@@ -1,0 +1,433 @@
+/************************************************************
+ * BARANG KELUAR CEPAT — KDKMP 002
+ * Halaman bantuan input barang keluar (unit sendiri).
+ * Nyambung LANGSUNG ke backend StockOpname DPules
+ * (endpoint yang sama dengan web SO resmi).
+ * Deploy: Deploy > New deployment > Web app
+ *   Execute as: Me
+ *   Access   : Anyone
+ ************************************************************/
+function doGet() {
+  return HtmlService.createHtmlOutput(TEMPLATE())
+    .setTitle('Barang Keluar Cepat - KDKMP 002')
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1.0')
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+function TEMPLATE() { return `<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Barang Keluar Cepat — KDKMP 002</title>
+<link rel="icon" href="data:,">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  body{background:#f6f6f7;color:#1b1b1b;min-height:100vh;padding-bottom:80px}
+  header{background:#C71E1E;color:#fff;padding:18px 16px 16px}
+  header h1{font-size:20px;font-weight:800;letter-spacing:.2px}
+  header p{font-size:13px;opacity:.9;margin-top:4px}
+  .wrap{max-width:520px;margin:0 auto;padding:14px}
+  .card{background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,.08);padding:14px;margin-bottom:12px}
+  label{display:block;font-size:12px;font-weight:700;color:#555;margin:10px 0 5px;text-transform:uppercase;letter-spacing:.4px}
+  input[type=text],input[type=number],select{width:100%;padding:12px;border:1px solid #ddd;border-radius:9px;font-size:16px;background:#fafafa}
+  input:focus{outline:none;border-color:#C71E1E;background:#fff}
+  .cari{position:relative}
+  .cari .ico{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:15px;color:#999}
+  .cari input{padding-left:36px}
+  #hasil{max-height:300px;overflow:auto;border:1px solid #eee;border-radius:9px;margin-top:8px}
+  .item{padding:11px 12px;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center;gap:8px;cursor:pointer}
+  .item:active{background:#fdeeee}
+  .item:last-child{border-bottom:none}
+  .item .nm{font-size:14px;font-weight:600;line-height:1.25}
+  .item .kd{font-size:11px;color:#888;margin-top:2px}
+  .item .st{font-size:12px;font-weight:700;color:#C71E1E;white-space:nowrap}
+  .kosong{text-align:center;color:#999;padding:22px 10px;font-size:14px}
+  .jumlah-chip{font-size:12px;color:#666;background:#f5f5f5;padding:3px 10px;border-radius:20px}
+  #panel{display:none}
+  .info-pilih{background:#fdeeee;border-left:4px solid #C71E1E;border-radius:8px;padding:10px 12px;font-size:14px;margin-bottom:4px}
+  .info-pilih b{display:block;font-size:15px}
+  .info-pilih .stok{font-size:13px;color:#C71E1E;font-weight:700;margin-top:2px}
+  #kirim{width:100%;margin-top:14px;padding:14px;background:#C71E1E;color:#fff;border:none;border-radius:10px;font-size:16px;font-weight:800;cursor:pointer}
+  #kirim:disabled{opacity:.55}
+  #kirim.sibuk{opacity:.6}
+  #status{margin-top:10px;padding:10px 12px;border-radius:9px;font-size:14px;font-weight:600;display:none;line-height:1.4}
+  #status.ok{display:block;background:#e7f6ec;color:#146c2e}
+  #status.gagal{display:block;background:#fdecec;color:#a41717}
+  #status.hapus{display:none}
+  .info-kecil{font-size:11px;color:#999;text-align:center;margin-top:14px;line-height:1.5}
+  .info-kecil a{color:#999}
+  .petugas-row{display:flex;gap:8px;align-items:flex-end}
+  .petugas-row > div{flex:1}
+  /* ===== LAPORAN ===== */
+  .laporan{padding:2px 0 0}
+  .laporan .tl{font-weight:800;font-size:15.5px;color:#1b1b1b}
+  .laporan .tl span{font-size:11.5px;color:#999;font-weight:600}
+  .periode{display:flex;gap:6px;overflow-x:auto;padding:8px 0;scrollbar-width:none}
+  .periode::-webkit-scrollbar{display:none}
+  .periode button{flex:0 0 auto;border:1px solid #ececec;background:#fff;color:#444;border-radius:20px;padding:7px 13px;font-size:12.5px;font-weight:600;cursor:pointer}
+  .periode button.aktif{background:#C71E1E;border-color:#C71E1E;color:#fff}
+  .kartu3{display:flex;gap:8px;margin:4px 0 2px}
+  .kartu3 > div{flex:1;background:#fff;border:1px solid #eee;border-radius:10px;padding:10px}
+  .kartu3 .lb{font-size:9.5px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.4px}
+  .kartu3 .v{font-size:16px;font-weight:800;margin-top:2px;color:#C71E1E}
+  .kartu3 div.g .v{color:#0a7d3a}
+  .kartu3 .cnt{font-size:10.5px;color:#999;margin-top:1px}
+  table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:6px}
+  th{text-align:left;font-size:9.5px;text-transform:uppercase;letter-spacing:.4px;color:#888;padding:7px 6px;border-bottom:1px solid #eee;background:#fafafa}
+  td{padding:8px 6px;border-bottom:1px solid #f4f4f4;vertical-align:top}
+  tr:last-child td{border-bottom:none}
+  td.ru{font-weight:700;white-space:nowrap}
+  .tag{display:inline-block;font-size:9px;font-weight:700;padding:2px 7px;border-radius:11px;white-space:nowrap}
+  .tag.jual{background:#fdecec;color:#C71E1E}
+  .tag.rusak{background:#fff3e0;color:#b26a00}
+  .tag.expired{background:#e8e8e8;color:#555}
+  .tag.lain{background:#e8f0fe;color:#1a56db}
+</style>
+</head>
+<body>
+<header>
+  <h1>Barang Keluar Cepat</h1>
+  <p id="sub">KDKMP-002 (Bojongloa) · memuat data…</p>
+</header>
+
+<div class="wrap">
+  <div class="card">
+    <label for="petugas">Nama Petugas</label>
+    <select id="petugas">
+      <option value="Fikhri Hilmi Rozika" selected>Fikhri Hilmi Rozika</option>
+      <option value="Fuad Muhamad Tadjul Arifin">Fuad Muhamad Tadjul Arifin</option>
+      <option value="Mela Karmila">Mela Karmila</option>
+      <option value="Marsya Futri Nabila">Marsya Futri Nabila</option>
+    </select>
+
+    <label for="cari">Cari Barang</label>
+    <div class="cari">
+      <span class="ico">🔎</span>
+      <input type="text" id="cari" placeholder="Ketik nama / kode… (misal: indomilk)">
+    </div>
+    <div id="hasil"><div class="kosong">Ketik dulu buat cari barang…</div></div>
+  </div>
+
+  <div class="card" id="panel">
+    <div class="info-pilih">
+      <b id="pilihNama">—</b>
+      <span id="pilihKode" class="jumlah-chip"></span>
+      <div class="stok" id="pilihStok"></div>
+    </div>
+
+    <label for="jumlah">Jumlah Keluar</label>
+    <input type="number" id="jumlah" min="1" placeholder="Contoh: 2">
+
+    <label for="ket">Keterangan / Keperluan</label>
+    <select id="ket">
+      <option value="Penjualan harian">Penjualan harian</option>
+      <option value="Rusak">Rusak</option>
+      <option value="Expired">Expired</option>
+    </select>
+
+    <button id="kirim">Kirim ➜ Masuk ke Sistem</button>
+    <div id="status"></div>
+  </div>
+
+  <div class="card" id="kartuLaporan" style="display:none">
+    <div class="laporan">
+      <div class="tl">📋 Laporan Barang Keluar <span id="rptInfo"></span></div>
+      <div class="periode" id="rptPeriode"></div>
+      <div class="kartu3">
+        <div><div class="lb">Barang Keluar</div><div class="v" id="rptPcs">0</div><div class="cnt">total pcs</div></div>
+        <div class="g"><div class="lb">Transaksi</div><div class="v" id="rptTrx">0</div><div class="cnt">kali kirim</div></div>
+        <div class="g"><div class="lb">Petugas</div><div class="v" id="rptPetugas">0</div><div class="cnt">orang</div></div>
+      </div>
+      <div id="rptRekap"></div>
+      <div id="rptList"></div>
+    </div>
+  </div>
+
+  <div class="info-kecil">
+    Terhubung langsung ke sistem StockOpname KDKMP (backend resmi yang sama dengan web SO).<br>
+    Data masuk ke riwayat barang keluar unit 002.
+  </div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  var API = 'https://script.google.com/macros/s/AKfycbxF4OWQxWw-AO1Tq1Zq80eG75Oi5emHDYDjr_8QVoOHkvx365ew3XMhnBjlxf9yFbBdoQ/exec';
+  var KDKMP = 'KDKMP-002';
+
+  var $ = function(id){ return document.getElementById(id); };
+  var barang = [];
+  var dipilih = null;
+
+  var sub = $('sub'), hasil = $('hasil'), panel = $('panel'),
+      cari = $('cari'), kirim = $('kirim'), statusEl = $('status');
+
+  function load(){
+    fetch(API + '?action=getInitialData&kdkmpId=' + KDKMP)
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        if(!d || !d.success){ throw new Error('Gagal ambil data'); }
+        barang = (d.barang || []).slice();
+        var namaUnit = (d.kdkmp && d.kdkmp.nama) ? d.kdkmp.nama : KDKMP;
+        sub.textContent = KDKMP + ' (' + namaUnit + ') · ' + barang.length + ' barang siap';
+        render(cari ? cari.value : '');
+      })
+      .catch(function(e){
+        sub.textContent = 'Gagal ambil data — cek koneksi';
+        hasil.innerHTML = '<div class="kosong">Gagal memuat barang. Cek internet, refresh.</div>';
+      });
+  }
+
+  function fmtStok(x){ return (typeof x === 'number') ? x.toLocaleString('id-ID') : (x || '0'); }
+
+  function render(kata){
+    var q = kata.trim().toLowerCase();
+    if(barang.length === 0){
+      hasil.innerHTML = '<div class="kosong">Memuat daftar barang... tunggu sebentar</div>';
+      return;
+    }
+    var f = q ? barang.filter(function(b){
+      return (b.nama || '').toLowerCase().indexOf(q) > -1 ||
+             (b.kode || '').toLowerCase().indexOf(q) > -1;
+    }) : [];
+    if(!q){
+      hasil.innerHTML = '<div class="kosong">Ketik dulu buat cari barang…</div>';
+      return;
+    }
+    if(!f.length){
+      hasil.innerHTML = '<div class="kosong">Tidak ada barang cocok dengan "' + kata + '"</div>';
+      return;
+    }
+    var tampil = f.slice(0, 60);
+    var html = '';
+    tampil.forEach(function(b){
+      html += '<div class="item" data-kode="' + b.kode + '">' +
+              '<div><div class="nm">' + escapeHtml(b.nama) + '</div>' +
+              '<div class="kd">' + b.kode + (b.satuan ? ' · satuan: ' + b.satuan : '') + '</div></div>' +
+              '<div class="st">stok ' + fmtStok(b.stokSystem) + '</div></div>';
+    });
+    if(f.length > tampil.length){
+      html += '<div class="kosong">…dan ' + (f.length - tampil.length) + ' lainnya (perhalus kata cari)</div>';
+    }
+    hasil.innerHTML = html;
+    hasil.querySelectorAll('.item').forEach(function(el){
+      el.addEventListener('click', function(){
+        pilih(barang.find(function(b){ return b.kode === el.getAttribute('data-kode'); }));
+      });
+    });
+  }
+
+  function escapeHtml(s){
+    return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function pilih(b){
+    if(!b) return;
+    dipilih = b;
+    $('pilihNama').textContent = b.nama;
+    $('pilihKode').textContent = b.kode;
+    $('pilihStok').textContent = 'Stok sistem: ' + fmtStok(b.stokSystem) + ' ' + (b.satuan || '');
+    panel.style.display = 'block';
+    panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    $('jumlah').focus();
+  }
+
+  cari.addEventListener('input', function(){ render(cari.value); });
+  cari.addEventListener('focus', function(){ render(cari.value); });
+
+  kirim.addEventListener('click', function(){
+    if(!dipilih){
+      status('Pilih dulu barangnya dari hasil cari.', 'gagal'); return;
+    }
+    var jml = parseInt($('jumlah').value, 10);
+    if(!jml || jml <= 0){
+      status('Isi jumlah keluar (minimal 1).', 'gagal'); return;
+    }
+    if(typeof dipilih.stokSystem === 'number' && jml > dipilih.stokSystem){
+      status('Stok gak cukup! Stok sistem: ' + dipilih.stokSystem + ' ' + (dipilih.satuan || ''), 'gagal'); return;
+    }
+    var payload = {
+      action: 'submitBarangKeluar',
+      kdkmpId: KDKMP,
+      kodeBarang: dipilih.kode,
+      jumlah: jml,
+      keterangan: ($('ket').value || '').trim(),
+      petugas: ($('petugas').value || '').trim() || 'Petugas'
+    };
+    kirim.disabled = true;
+    kirim.textContent = 'Mengirim…';
+    status('', 'hapus');
+    fetch(API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload)
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      kirim.disabled = false;
+      kirim.textContent = 'Kirim ➜ Masuk ke Sistem';
+      if(res && res.success){
+        status('✅ Berhasil! ' + dipilih.nama + ' -' + jml + ' ' + (dipilih.satuan || '') + ' masuk ke riwayat.\nPesan: ' + (res.message || 'ok'), 'ok');
+        $('jumlah').value = ''; $('ket').value = '';
+        var b = dipilih;
+        if(typeof b.stokSystem === 'number') b.stokSystem = Math.max(0, b.stokSystem - jml);
+        $('pilihStok').textContent = 'Stok sistem: ' + fmtStok(b.stokSystem) + ' ' + (b.satuan || '');
+      } else {
+        status('❌ Gagal: ' + (res && res.message ? res.message : 'dari sistem'), 'gagal');
+      }
+    })
+    .catch(function(e){
+      kirim.disabled = false;
+      kirim.textContent = 'Kirim ➜ Masuk ke Sistem';
+      status('❌ Gagal terhubung ke sistem. Cek internet, coba lagi.', 'gagal');
+    });
+  });
+
+  function status(teks, tipe){
+    statusEl.textContent = teks;
+    statusEl.className = tipe;
+  }
+
+  // ===== LAPORAN BARANG KELUAR =====
+  var riwayat = [];
+  var rptPeriode = 'semua';
+  var RPT = {
+    hari: 'Hari Ini', kemarin: 'Kemarin', '7hari': '7 Hari', semua: 'Keseluruhan'
+  };
+
+  function fmtTgl(t){
+    var d = new Date(t);
+    if(isNaN(d)) return String(t || '');
+    // paksa WIB (UTC+7) biar konsisten laporannya
+    var w = new Date(d.getTime() + 7*3600*1000);
+    var bln = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+    return w.getUTCDate() + ' ' + bln[w.getUTCMonth()] + ' ' + w.getUTCHours() + ':' + ('0'+w.getUTCMinutes()).slice(-2);
+  }
+  function tglIso(x){
+    var d = new Date(x);
+    if(isNaN(d)) return '';
+    var w = new Date(d.getTime() + 7*3600*1000);
+    return w.toISOString().slice(0,10);
+  }
+  function tglHariIni(){
+    var w = new Date(Date.now() + 7*3600*1000);
+    return w.toISOString().slice(0,10);
+  }
+  function dalamRpt(t){
+    if(rptPeriode === 'semua') return true;
+    var iso = tglIso(t);
+    if(!iso) return false;
+    if(rptPeriode === 'hari') return iso === tglHariIni();
+    if(rptPeriode === 'kemarin'){
+      var d = new Date(); d.setDate(d.getDate()-1);
+      var km = d.getFullYear() + '-' + ('0'+(d.getMonth()+1)).slice(-2) + '-' + ('0'+d.getDate()).slice(-2);
+      return iso === km;
+    }
+    if(rptPeriode === '7hari'){
+      var a = new Date(tglHariIni() + 'T00:00:00'), b = new Date(iso + 'T00:00:00');
+      return Math.round((a - b) / 86400000) <= 6;
+    }
+    return true;
+  }
+  function tagKet(k){
+    k = String(k || '').toLowerCase();
+    if(k.indexOf('jual') > -1 || k.indexOf('penjualan') > -1) return '<span class="tag jual">Penjualan</span>';
+    if(k.indexOf('rusak') > -1) return '<span class="tag rusak">Rusak</span>';
+    if(k.indexOf('exp') > -1) return '<span class="tag expired">Expired</span>';
+    return '<span class="tag lain">' + escapeHtml(k || '-') + '</span>';
+  }
+
+  function renderLaporan(){
+    var f = riwayat.filter(function(h){ return dalamRpt(h.tanggal); });
+    var totPcs = f.reduce(function(a,h){ return a + (Number(h.jumlah)||0); }, 0);
+    var petugas = {};
+    f.forEach(function(h){ petugas[String(h.petugas||'?')] = 1; });
+
+    $('rptPcs').textContent = totPcs.toLocaleString('id-ID') + ' pcs';
+    $('rptTrx').textContent = f.length;
+    $('rptPetugas').textContent = Object.keys(petugas).length;
+    $('rptInfo').textContent = '· ' + f.length + (f.length === 1 ? ' catatan' : ' catatan');
+
+    // rekap per barang (urut qty terbesar)
+    var by = {};
+    f.forEach(function(h){
+      var k = String(h.kode || '');
+      by[k] = by[k] || { nama: String(h.nama || k), pcs: 0, awal: null, akhir: null };
+      by[k].pcs += Number(h.jumlah)||0;
+      by[k].awal = (by[k].awal == null) ? h.stokAwal : by[k].awal;
+      by[k].akhir = h.stokAkhir != null ? h.stokAkhir : by[k].akhir;
+    });
+    var arr = Object.keys(by).map(function(k){ return by[k]; })
+      .sort(function(a,b){ return b.pcs - a.pcs; });
+
+    var hTabel = '<table><thead><tr><th>Barang</th><th style="text-align:right">Qty</th>' +
+      '<th style="text-align:right">Stok</th></tr></thead><tbody>';
+    if(!arr.length){
+      hTabel += '<tr><td colspan="3" style="text-align:center;color:#aaa;padding:18px">Belum ada barang keluar periode ini</td></tr>';
+    } else {
+      arr.forEach(function(a){
+        var stok = (a.awal != null && a.akhir != null) ? a.awal + ' → ' + a.akhir : (a.akhir != null ? String(a.akhir) : '-');
+        hTabel += '<tr><td class="ru">' + escapeHtml(a.nama) + '</td>' +
+          '<td style="text-align:right" class="ru">' + a.pcs + '</td>' +
+          '<td style="text-align:right;color:#888">' + stok + '</td></tr>';
+      });
+    }
+    hTabel += '</tbody></table>';
+    $('rptRekap').innerHTML = '<div style="font-size:12.5px;font-weight:800;margin-top:10px">Rekap per Barang</div>' + hTabel;
+
+    // riwayat detail (terbaru di atas)
+    var list = f.slice().sort(function(a,b){ return String(b.tanggal).localeCompare(String(a.tanggal)); });
+    var hList = '<table><thead><tr><th>Waktu</th><th>Barang</th><th style="text-align:right">Qty</th>' +
+      '<th>Petugas</th><th>Ket</th></tr></thead><tbody>';
+    if(!list.length){
+      hList += '<tr><td colspan="5" style="text-align:center;color:#aaa;padding:18px">Belum ada riwayat periode ini</td></tr>';
+    } else {
+      list.slice(0, 60).forEach(function(h){
+        hList += '<tr><td style="white-space:nowrap;font-size:11.5px">' + fmtTgl(h.tanggal) + '</td>' +
+          '<td class="ru">' + escapeHtml(String(h.nama||'').slice(0,40)) + '</td>' +
+          '<td style="text-align:right" class="ru">' + (Number(h.jumlah)||0) + '</td>' +
+          '<td style="font-size:12px">' + escapeHtml(String(h.petugas||'-').split(' ')[0]) + '</td>' +
+          '<td>' + tagKet(h.keterangan) + '</td></tr>';
+      });
+      if(list.length > 60) hList += '<tr><td colspan="5" style="text-align:center;color:#aaa">+ ' + (list.length-60) + ' lagi (perhalus periode)</td></tr>';
+    }
+    hList += '</tbody></table>';
+    $('rptList').innerHTML = '<div style="font-size:12.5px;font-weight:800;margin-top:12px">Riwayat Kirim</div>' + hList;
+  }
+
+  function buatTombolRpt(){
+    var h = '';
+    ['hari','kemarin','7hari','semua'].forEach(function(k){
+      h += '<button data-r="' + k + '" class="' + (rptPeriode === k ? 'aktif' : '') + '">' + RPT[k] + '</button>';
+    });
+    $('rptPeriode').innerHTML = h;
+    $('rptPeriode').querySelectorAll('button').forEach(function(b){
+      b.addEventListener('click', function(){
+        rptPeriode = b.getAttribute('data-r');
+        $('rptPeriode').querySelectorAll('button').forEach(function(x){ x.classList.remove('aktif'); });
+        b.classList.add('aktif');
+        renderLaporan();
+      });
+    });
+  }
+
+  function muatRiwayat(){
+    fetch(API + '?action=getBarangKeluarHistory&kdkmpId=' + KDKMP)
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        if(!d || !d.success || !Array.isArray(d.history)) throw new Error('gagal');
+        riwayat = d.history.slice();
+        $('kartuLaporan').style.display = 'block';
+        renderLaporan();
+      })
+      .catch(function(){ $('kartuLaporan').style.display = 'none'; });
+  }
+
+  buatTombolRpt();
+  load();
+  setTimeout(muatRiwayat, 500);
+})();
+</script>
+</body>
+</html>`; }
