@@ -139,6 +139,7 @@
   .tag.jual{background:var(--red-50);color:var(--red)}
   .tag.rusak{background:#FFF3E0;color:#9A5B00}
   .tag.expired{background:#E8E8EA;color:#46464D}
+  .tag.hadiah{background:#E6F4EA;color:#0B7A46}
   .tag.lain{background:#E8F0FE;color:#1A56DB}
 
   .trx{display:block;padding:12px 2px;border-bottom:1px solid var(--line)}
@@ -233,6 +234,7 @@
         <option value="Penjualan harian">Penjualan harian</option>
         <option value="Rusak">Rusak</option>
         <option value="Expired">Expired</option>
+        <option value="Penukaran hadiah">Penukaran hadiah</option>
       </select>
 
       <div id="ringkas" aria-live="polite"></div>
@@ -539,6 +541,7 @@
     if(l.indexOf('jual') > -1 || l.indexOf('penjualan') > -1) return '<span class="tag jual">Penjualan</span>';
     if(l.indexOf('rusak') > -1) return '<span class="tag rusak">Rusak</span>';
     if(l.indexOf('exp') > -1) return '<span class="tag expired">Expired</span>';
+    if(l.indexOf('hadiah') > -1) return '<span class="tag hadiah">Penukaran hadiah</span>';
     return '<span class="tag lain">' + escapeHtml(asli || '-') + '</span>';
   }
   function stokTrx(h){
